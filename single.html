@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>해양수산 KPI 대시보드</title>
+    <style>
+      :root {
+        --bg: #f4f7f8;
+        --panel: #ffffff;
+        --text: #172026;
+        --muted: #66747f;
+        --line: #dbe4e8;
+        --grid: #e8eef1;
+        --teal: #2f7d8c;
+        --blue: #2f6fb2;
+        --purple: #7166a8;
+        --coral: #c65d4a;
+        --amber: #d59b38;
+        --green: #4d9f72;
+        --shadow: 0 14px 34px rgba(26, 42, 54, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", Arial, sans-serif;
+      }
+
+      .dashboard {
+        width: min(1480px, calc(100vw - 32px));
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 28px 0;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--teal);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      p,
+      dl,
+      dd {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        line-height: 1.18;
+      }
+
+      .source-meta {
+        display: flex;
+        gap: 10px;
+      }
+
+      .source-meta div {
+        min-width: 116px;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .source-meta dt {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .source-meta dd {
+        margin-top: 3px;
+        font-size: 0.88rem;
+        font-weight: 800;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .kpi-card {
+        position: relative;
+        min-height: 118px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        padding: 19px 20px 16px 24px;
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 8px;
+        background: var(--teal);
+      }
+
+      .kpi-export::before {
+        background: var(--blue);
+      }
+
+      .kpi-satisfaction::before {
+        background: var(--purple);
+      }
+
+      .kpi-incident::before {
+        background: var(--coral);
+      }
+
+      .kpi-label,
+      .kpi-unit {
+        display: block;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .kpi-card strong {
+        display: block;
+        margin: 10px 0 5px;
+        font-size: 1.85rem;
+        line-height: 1.05;
+        white-space: nowrap;
+      }
+
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 0.95fr 1.15fr;
+        grid-template-rows: minmax(300px, 1fr) minmax(276px, 0.88fr);
+        gap: 14px;
+      }
+
+      .panel {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        padding: 18px 20px 16px;
+      }
+
+      .panel-monthly {
+        grid-row: span 2;
+      }
+
+      .panel-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .panel h2 {
+        font-size: 1rem;
+        line-height: 1.28;
+      }
+
+      .panel p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .panel-chip {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 9px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .legend-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .legend-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        border-radius: 50%;
+      }
+
+      .legend-dot.blue {
+        background: var(--blue);
+      }
+
+      .legend-dot.red {
+        background: var(--coral);
+      }
+
+      .chart {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 220px;
+      }
+
+      .panel-monthly .chart {
+        min-height: 610px;
+      }
+
+      .axis {
+        stroke: #31434d;
+        stroke-width: 1.1;
+      }
+
+      .grid-line {
+        stroke: var(--grid);
+        stroke-width: 1;
+      }
+
+      .chart-label {
+        fill: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .chart-value {
+        fill: var(--text);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      @media (max-width: 980px) {
+        .dashboard {
+          width: min(760px, calc(100vw - 24px));
+          padding: 18px 0;
+        }
+
+        .page-header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .source-meta {
+          flex-wrap: wrap;
+        }
+
+        .kpi-grid,
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-monthly {
+          grid-row: auto;
+        }
+
+        .panel-monthly .chart {
+          min-height: 330px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .kpi-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .kpi-card strong {
+          font-size: 1.55rem;
+        }
+
+        .panel {
+          padding: 15px 14px;
+        }
+
+        .panel-heading {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="dashboard">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Ocean & Fisheries Operations</p>
+          <h1>해양수산 KPI 대시보드</h1>
+        </div>
+        <dl class="source-meta">
+          <div>
+            <dt>기간</dt>
+            <dd>2024.01-2025.12</dd>
+          </div>
+          <div>
+            <dt>원천</dt>
+            <dd>300 records</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="kpi-grid" aria-label="핵심 KPI">
+        <article class="kpi-card kpi-catch">
+          <span class="kpi-label">총 어획량</span>
+          <strong id="totalCatch">-</strong>
+          <span class="kpi-unit">tons</span>
+        </article>
+        <article class="kpi-card kpi-export">
+          <span class="kpi-label">총 수출액</span>
+          <strong id="totalExport">-</strong>
+          <span class="kpi-unit">USD</span>
+        </article>
+        <article class="kpi-card kpi-satisfaction">
+          <span class="kpi-label">평균 만족도</span>
+          <strong id="avgSatisfaction">-</strong>
+          <span class="kpi-unit">score</span>
+        </article>
+        <article class="kpi-card kpi-incident">
+          <span class="kpi-label">총 안전사고 건수</span>
+          <strong id="totalIncidents">-</strong>
+          <span class="kpi-unit">cases</span>
+        </article>
+      </section>
+
+      <section class="charts-grid" aria-label="KPI 차트">
+        <article class="panel panel-ports">
+          <div class="panel-heading">
+            <div>
+              <h2>항만별 위판금액 TOP 5</h2>
+              <p>landing_value_usd 합계</p>
+            </div>
+            <span class="panel-chip">USD</span>
+          </div>
+          <svg id="portsChart" class="chart" role="img" aria-label="항만별 위판금액 상위 5개 막대그래프"></svg>
+        </article>
+
+        <article class="panel panel-monthly">
+          <div class="panel-heading">
+            <div>
+              <h2>월별 수출액 추이</h2>
+              <p>2024년과 2025년 export_value_usd 월별 합계 비교</p>
+            </div>
+            <div class="legend-row">
+              <span><i class="legend-dot blue"></i>2024</span>
+              <span><i class="legend-dot red"></i>2025</span>
+            </div>
+          </div>
+          <svg id="monthlyChart" class="chart" role="img" aria-label="월별 수출액 추이 선그래프"></svg>
+        </article>
+
+        <article class="panel panel-risk">
+          <div class="panel-heading">
+            <div>
+              <h2>기상위험도별 사고 건수</h2>
+              <p>safety_incident_count 합계</p>
+            </div>
+            <span class="panel-chip">cases</span>
+          </div>
+          <svg id="riskChart" class="chart" role="img" aria-label="기상위험도별 안전사고 건수 비교 막대그래프"></svg>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const data = {
+        kpi: {
+          totalCatchTons: 912.36,
+          totalExportUsd: 1319524,
+          avgSatisfaction: 75.55466666666666,
+          totalIncidents: 141,
+        },
+        topPorts: [
+          { port: "앵커리지", landingValueUsd: 501792 },
+          { port: "홋카이도", landingValueUsd: 390339 },
+          { port: "시애틀", landingValueUsd: 382311 },
+          { port: "보스턴", landingValueUsd: 380366 },
+          { port: "샌디에이고", landingValueUsd: 322047 },
+        ],
+        monthlyExport: [
+          { month: 1, y2024: 50952, y2025: 34910 },
+          { month: 2, y2024: 43649, y2025: 47598 },
+          { month: 3, y2024: 66201, y2025: 58793 },
+          { month: 4, y2024: 49830, y2025: 60736 },
+          { month: 5, y2024: 53460, y2025: 68591 },
+          { month: 6, y2024: 50691, y2025: 75992 },
+          { month: 7, y2024: 65898, y2025: 54657 },
+          { month: 8, y2024: 73675, y2025: 57325 },
+          { month: 9, y2024: 59014, y2025: 53006 },
+          { month: 10, y2024: 50639, y2025: 60214 },
+          { month: 11, y2024: 56582, y2025: 43860 },
+          { month: 12, y2024: 43474, y2025: 39777 },
+        ],
+        riskIncidents: [
+          { level: "Low", incidents: 38, rows: 95 },
+          { level: "Medium", incidents: 79, rows: 171 },
+          { level: "High", incidents: 24, rows: 34 },
+        ],
+      };
+
+      const moneyFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+      const decimalFormat = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const colors = {
+        teal: "#2f7d8c",
+        blue: "#2f6fb2",
+        purple: "#7166a8",
+        coral: "#c65d4a",
+        amber: "#d59b38",
+        green: "#4d9f72",
+        grid: "#e8eef1",
+      };
+
+      function setKpis() {
+        document.getElementById("totalCatch").textContent = decimalFormat.format(data.kpi.totalCatchTons);
+        document.getElementById("totalExport").textContent = `$${moneyFormat.format(data.kpi.totalExportUsd)}`;
+        document.getElementById("avgSatisfaction").textContent = decimalFormat.format(data.kpi.avgSatisfaction);
+        document.getElementById("totalIncidents").textContent = moneyFormat.format(data.kpi.totalIncidents);
+      }
+
+      function svgEl(name, attrs = {}) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+        Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+        return el;
+      }
+
+      function clearSvg(svg, width, height) {
+        svg.innerHTML = "";
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
+
+      function addText(svg, x, y, value, className = "chart-label", extra = {}) {
+        const el = svgEl("text", { x, y, class: className, ...extra });
+        el.textContent = value;
+        svg.appendChild(el);
+        return el;
+      }
+
+      function addLine(svg, x1, y1, x2, y2, className = "grid-line", extra = {}) {
+        const el = svgEl("line", { x1, y1, x2, y2, class: className, ...extra });
+        svg.appendChild(el);
+        return el;
+      }
+
+      function addRect(svg, x, y, width, height, fill, extra = {}) {
+        const el = svgEl("rect", { x, y, width, height, fill, ...extra });
+        svg.appendChild(el);
+        return el;
+      }
+
+      function addCircle(svg, cx, cy, r, fill, extra = {}) {
+        const el = svgEl("circle", { cx, cy, r, fill, ...extra });
+        svg.appendChild(el);
+        return el;
+      }
+
+      function niceMax(value, step) {
+        return Math.ceil(value / step) * step;
+      }
+
+      function drawPortsChart() {
+        const svg = document.getElementById("portsChart");
+        const width = 640;
+        const height = 300;
+        clearSvg(svg, width, height);
+
+        const margin = { top: 18, right: 112, bottom: 40, left: 112 };
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+        const max = niceMax(Math.max(...data.topPorts.map((d) => d.landingValueUsd)), 100000);
+        const barHeight = 28;
+        const gap = (chartHeight - barHeight * data.topPorts.length) / (data.topPorts.length - 1);
+
+        for (let i = 0; i <= 4; i += 1) {
+          const value = (max / 4) * i;
+          const x = margin.left + (value / max) * chartWidth;
+          addLine(svg, x, margin.top, x, margin.top + chartHeight);
+          addText(svg, x, margin.top + chartHeight + 27, moneyFormat.format(value), "chart-label", {
+            "text-anchor": "middle",
+          });
+        }
+
+        data.topPorts.forEach((item, index) => {
+          const y = margin.top + index * (barHeight + gap);
+          const widthValue = (item.landingValueUsd / max) * chartWidth;
+          addText(svg, margin.left - 14, y + 19, item.port, "chart-value", { "text-anchor": "end" });
+          addRect(svg, margin.left, y, widthValue, barHeight, [colors.teal, colors.blue, colors.purple, colors.coral, colors.amber][index], {
+            rx: 5,
+          });
+          addText(svg, margin.left + widthValue + 10, y + 19, moneyFormat.format(item.landingValueUsd), "chart-value");
+        });
+
+        addLine(svg, margin.left, margin.top + chartHeight, margin.left + chartWidth, margin.top + chartHeight, "axis");
+      }
+
+      function drawMonthlyChart() {
+        const svg = document.getElementById("monthlyChart");
+        const width = 760;
+        const height = 590;
+        clearSvg(svg, width, height);
+
+        const margin = { top: 28, right: 34, bottom: 52, left: 76 };
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+        const values = data.monthlyExport.flatMap((d) => [d.y2024, d.y2025]);
+        const max = niceMax(Math.max(...values), 10000);
+
+        const xForMonth = (month) => margin.left + ((month - 1) / 11) * chartWidth;
+        const yForValue = (value) => margin.top + chartHeight - (value / max) * chartHeight;
+
+        for (let i = 0; i <= 5; i += 1) {
+          const value = (max / 5) * i;
+          const y = yForValue(value);
+          addLine(svg, margin.left, y, margin.left + chartWidth, y);
+          addText(svg, margin.left - 12, y + 4, moneyFormat.format(value), "chart-label", {
+            "text-anchor": "end",
+          });
+        }
+
+        data.monthlyExport.forEach((item) => {
+          const x = xForMonth(item.month);
+          addLine(svg, x, margin.top, x, margin.top + chartHeight, "grid-line", { opacity: 0.5 });
+          addText(svg, x, margin.top + chartHeight + 28, String(item.month), "chart-label", {
+            "text-anchor": "middle",
+          });
+        });
+
+        [
+          { key: "y2024", color: colors.blue },
+          { key: "y2025", color: colors.coral },
+        ].forEach((series) => {
+          const points = data.monthlyExport.map((item) => [xForMonth(item.month), yForValue(item[series.key])]);
+          const d = points.map(([x, y], index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+          svg.appendChild(
+            svgEl("path", {
+              d,
+              fill: "none",
+              stroke: series.color,
+              "stroke-width": 3.2,
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round",
+            }),
+          );
+          points.forEach(([x, y]) => {
+            addCircle(svg, x, y, 4.8, series.color, { stroke: "#fff", "stroke-width": 1.4 });
+          });
+        });
+
+        addLine(svg, margin.left, margin.top + chartHeight, margin.left + chartWidth, margin.top + chartHeight, "axis");
+        addLine(svg, margin.left, margin.top, margin.left, margin.top + chartHeight, "axis");
+      }
+
+      function drawRiskChart() {
+        const svg = document.getElementById("riskChart");
+        const width = 640;
+        const height = 300;
+        clearSvg(svg, width, height);
+
+        const margin = { top: 18, right: 38, bottom: 56, left: 54 };
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+        const max = niceMax(Math.max(...data.riskIncidents.map((d) => d.incidents)), 20);
+        const groupWidth = chartWidth / data.riskIncidents.length;
+        const barWidth = 84;
+        const riskColors = {
+          Low: colors.green,
+          Medium: colors.amber,
+          High: colors.coral,
+        };
+
+        for (let i = 0; i <= 4; i += 1) {
+          const value = (max / 4) * i;
+          const y = margin.top + chartHeight - (value / max) * chartHeight;
+          addLine(svg, margin.left, y, margin.left + chartWidth, y);
+          addText(svg, margin.left - 10, y + 4, moneyFormat.format(value), "chart-label", {
+            "text-anchor": "end",
+          });
+        }
+
+        data.riskIncidents.forEach((item, index) => {
+          const center = margin.left + index * groupWidth + groupWidth / 2;
+          const h = (item.incidents / max) * chartHeight;
+          const x = center - barWidth / 2;
+          const y = margin.top + chartHeight - h;
+          addRect(svg, x, y, barWidth, h, riskColors[item.level], { rx: 6 });
+          addText(svg, center, y - 10, moneyFormat.format(item.incidents), "chart-value", { "text-anchor": "middle" });
+          addText(svg, center, margin.top + chartHeight + 28, item.level, "chart-value", { "text-anchor": "middle" });
+          addText(svg, center, margin.top + chartHeight + 46, `n=${item.rows}`, "chart-label", { "text-anchor": "middle" });
+        });
+
+        addLine(svg, margin.left, margin.top + chartHeight, margin.left + chartWidth, margin.top + chartHeight, "axis");
+        addLine(svg, margin.left, margin.top, margin.left, margin.top + chartHeight, "axis");
+      }
+
+      function render() {
+        setKpis();
+        drawPortsChart();
+        drawMonthlyChart();
+        drawRiskChart();
+      }
+
+      window.addEventListener("DOMContentLoaded", render);
+    </script>
+  </body>
+</html>
