@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공학용 계산기</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #eef2f7;
+      font-family: Arial, sans-serif;
+    }
+
+    .calculator {
+      width: 380px;
+      background: #1f2937;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .display {
+      width: 100%;
+      height: 70px;
+      padding: 16px;
+      font-size: 28px;
+      text-align: right;
+      border: none;
+      outline: none;
+      border-radius: 12px;
+      background: #f9fafb;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      height: 55px;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      cursor: pointer;
+      background: #374151;
+      color: white;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #4b5563;
+      transform: translateY(-1px);
+    }
+
+    .operator {
+      background: #2563eb;
+    }
+
+    .operator:hover {
+      background: #1d4ed8;
+    }
+
+    .function {
+      background: #7c3aed;
+    }
+
+    .function:hover {
+      background: #6d28d9;
+    }
+
+    .clear {
+      background: #dc2626;
+    }
+
+    .clear:hover {
+      background: #b91c1c;
+    }
+
+    .equal {
+      background: #16a34a;
+      grid-column: span 2;
+    }
+
+    .equal:hover {
+      background: #15803d;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    .guide {
+      margin-top: 14px;
+      color: #d1d5db;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 420px) {
+      .calculator {
+        width: 92%;
+        padding: 18px;
+      }
+
+      button {
+        height: 50px;
+        font-size: 15px;
+      }
+
+      .display {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h1>공학용 계산기</h1>
+
+    <input type="text" class="display" id="display" readonly />
+
+    <div class="buttons">
+      <button class="clear" onclick="clearDisplay()">AC</button>
+      <button onclick="deleteLast()">DEL</button>
+      <button class="function" onclick="addFunction('Math.PI')">π</button>
+      <button class="function" onclick="addFunction('Math.E')">e</button>
+      <button class="operator" onclick="addValue('/')">÷</button>
+
+      <button class="function" onclick="addFunction('Math.sin(')">sin</button>
+      <button class="function" onclick="addFunction('Math.cos(')">cos</button>
+      <button class="function" onclick="addFunction('Math.tan(')">tan</button>
+      <button class="function" onclick="addFunction('Math.sqrt(')">√</button>
+      <button class="operator" onclick="addValue('*')">×</button>
+
+      <button class="function" onclick="addFunction('Math.log10(')">log</button>
+      <button class="function" onclick="addFunction('Math.log(')">ln</button>
+      <button class="function" onclick="addFunction('Math.pow(')">xʸ</button>
+      <button onclick="addValue('(')">(</button>
+      <button class="operator" onclick="addValue('-')">−</button>
+
+      <button onclick="addValue('7')">7</button>
+      <button onclick="addValue('8')">8</button>
+      <button onclick="addValue('9')">9</button>
+      <button onclick="addValue(')')">)</button>
+      <button class="operator" onclick="addValue('+')">+</button>
+
+      <button onclick="addValue('4')">4</button>
+      <button onclick="addValue('5')">5</button>
+      <button onclick="addValue('6')">6</button>
+      <button class="function" onclick="square()">x²</button>
+      <button class="function" onclick="factorial()">n!</button>
+
+      <button onclick="addValue('1')">1</button>
+      <button onclick="addValue('2')">2</button>
+      <button onclick="addValue('3')">3</button>
+      <button onclick="addValue('.')">.</button>
+      <button class="equal" onclick="calculate()">=</button>
+
+      <button class="zero" onclick="addValue('0')">0</button>
+      <button onclick="addValue(',')">,</button>
+      <button class="function" onclick="toRadians()">rad</button>
+      <button class="function" onclick="toDegrees()">deg</button>
+    </div>
+
+    <div class="guide">
+      sin, cos, tan은 라디안 기준입니다.<br />
+      xʸ 사용 예시: Math.pow(2,3) = 8
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById("display");
+
+    function addValue(value) {
+      display.value += value;
+    }
+
+    function addFunction(func) {
+      display.value += func;
+    }
+
+    function clearDisplay() {
+      display.value = "";
+    }
+
+    function deleteLast() {
+      display.value = display.value.slice(0, -1);
+    }
+
+    function calculate() {
+      try {
+        if (display.value.trim() === "") {
+          return;
+        }
+
+        const result = Function('"use strict"; return (' + display.value + ')')();
+
+        if (result === Infinity || result === -Infinity) {
+          display.value = "0으로 나눌 수 없습니다";
+        } else if (isNaN(result)) {
+          display.value = "계산 오류";
+        } else {
+          display.value = result;
+        }
+      } catch (error) {
+        display.value = "입력 오류";
+      }
+    }
+
+    function square() {
+      try {
+        if (display.value.trim() === "") return;
+
+        const value = Function('"use strict"; return (' + display.value + ')')();
+        display.value = Math.pow(value, 2);
+      } catch (error) {
+        display.value = "입력 오류";
+      }
+    }
+
+    function factorial() {
+      try {
+        const value = Number(display.value);
+
+        if (!Number.isInteger(value) || value < 0) {
+          display.value = "양의 정수만 가능";
+          return;
+        }
+
+        let result = 1;
+
+        for (let i = 2; i <= value; i++) {
+          result *= i;
+        }
+
+        display.value = result;
+      } catch (error) {
+        display.value = "입력 오류";
+      }
+    }
+
+    function toRadians() {
+      try {
+        const value = Number(display.value);
+        display.value = value * Math.PI / 180;
+      } catch (error) {
+        display.value = "입력 오류";
+      }
+    }
+
+    function toDegrees() {
+      try {
+        const value = Number(display.value);
+        display.value = value * 180 / Math.PI;
+      } catch (error) {
+        display.value = "입력 오류";
+      }
+    }
+
+    document.addEventListener("keydown", function(event) {
+      const key = event.key;
+
+      if (!isNaN(key) || "+-*/().,".includes(key)) {
+        addValue(key);
+      } else if (key === "Enter") {
+        calculate();
+      } else if (key === "Backspace") {
+        deleteLast();
+      } else if (key === "Escape") {
+        clearDisplay();
+      }
+    });
+  </script>
+</body>
+</html>
